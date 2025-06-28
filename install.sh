@@ -1,19 +1,33 @@
-# 下载二进制
-wget -O /usr/local/x-ui-linux-amd64.tar.gz https://github.com/634287319/3x-ui/releases/latest/download/x-ui-linux-amd64.tar.gz
+#!/bin/bash
+set -e
+apt update && apt install -y curl wget tar
 
-# 解压和部署
+arch=$(uname -m)
+case "$arch" in
+  x86_64|amd64) arch="amd64" ;;
+  aarch64|arm64) arch="arm64" ;;
+  *) echo "Unsupported arch: $arch"; exit 1 ;;
+esac
+
 cd /usr/local
-tar zxvf x-ui-linux-amd64.tar.gz
+wget -O x-ui-linux-${arch}.tar.gz https://github.com/634287319/3x-ui/releases/latest/download/x-ui-linux-${arch}.tar.gz
+tar zxvf x-ui-linux-${arch}.tar.gz
 cd x-ui
 chmod +x x-ui
 cp -f x-ui.service /etc/systemd/system/
 
-# 设置默认账号
-/usr/local/x-ui/x-ui setting -username admin -password admin123 -port 54321 -webBasePath webxyz
-
-# 启动服务
+# 启用服务
 systemctl daemon-reload
 systemctl enable x-ui
 systemctl start x-ui
 
-echo "访问地址: http://$(curl -s https://api.ipify.org):54321/webxyz"
+# 默认账号密码+路径
+username="admin"
+password="admin123"
+port="54321"
+webBasePath="panel$(date +%s | tail -c 5)"
+
+# 设置
+/usr/local/x-ui/x-ui setting -username $username -password $password -port $port -webBasePath $webBasePath
+echo "X-UI安装完成"
+echo "访问地址: http://$(curl -s https://api.ipify.org):$port/$webBasePath"
