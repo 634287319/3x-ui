@@ -43,14 +43,11 @@ log_folder="${XUI_LOG_FOLDER:=/var/log}"
 iplimit_log_path="${log_folder}/3xipl.log"
 iplimit_banned_log_path="${log_folder}/3xipl-banned.log"
 
-confirm() {
     if [[ $# > 1 ]]; then
-        echo && read -rp "$1 [Default $2]: " temp
         if [[ "${temp}" == "" ]]; then
             temp=$2
         fi
     else
-        read -rp "$1 [y/n]: " temp
     fi
     if [[ "${temp}" == "y" || "${temp}" == "Y" ]]; then
         return 0
@@ -59,18 +56,13 @@ confirm() {
     fi
 }
 
-confirm_restart() {
-    confirm "Restart the panel, Attention: Restarting the panel will also restart xray" "y"
     if [[ $? == 0 ]]; then
         restart
     else
-        show_menu
     fi
 }
 
-before_show_menu() {
     echo && echo -n -e "${yellow}Press enter to return to the main menu: ${plain}" && read -r temp
-    show_menu
 }
 
 install() {
@@ -85,28 +77,23 @@ install() {
 }
 
 update() {
-    confirm "This function will forcefully reinstall the latest version, and the data will not be lost. Do you want to continue?" "y"
     if [[ $? != 0 ]]; then
         LOGE "Cancelled"
         if [[ $# == 0 ]]; then
-            before_show_menu
         fi
         return 0
     fi
     bash <(curl -Ls https://raw.githubusercontent.com/634287319/3x-ui/main/install.sh)
     if [[ $? == 0 ]]; then
         LOGI "Update is complete, Panel has automatically restarted "
-        before_show_menu
     fi
 }
 
 update_menu() {
     echo -e "${yellow}Updating Menu${plain}"
-    confirm "This function will update the menu to the latest changes." "y"
     if [[ $? != 0 ]]; then
         LOGE "Cancelled"
         if [[ $# == 0 ]]; then
-            before_show_menu
         fi
         return 0
     fi
@@ -124,7 +111,6 @@ update_menu() {
     fi
 }
 
-legacy_version() {
     echo -n "Enter the panel version (like 2.4.0):"
     read -r tag_version
 
@@ -146,10 +132,8 @@ delete_script() {
 }
 
 uninstall() {
-    confirm "Are you sure you want to uninstall the panel? xray will also uninstalled!" "n"
     if [[ $? != 0 ]]; then
         if [[ $# == 0 ]]; then
-            show_menu
         fi
         return 0
     fi
@@ -171,23 +155,17 @@ uninstall() {
     delete_script
 }
 
-reset_user() {
-    confirm "Are you sure to reset the username and password of the panel?" "n"
     if [[ $? != 0 ]]; then
         if [[ $# == 0 ]]; then
-            show_menu
         fi
         return 0
     fi
-    read -rp "Please set the login username [default is a random username]: " config_account
     [[ -z $config_account ]] && config_account=$(date +%s%N | md5sum | cut -c 1-8)
-    read -rp "Please set the login password [default is a random password]: " config_password
     [[ -z $config_password ]] && config_password=$(date +%s%N | md5sum | cut -c 1-8)
     /usr/local/x-ui/x-ui setting -username ${config_account} -password ${config_password} >/dev/null 2>&1
     echo -e "Panel login username has been reset to: ${green} ${config_account} ${plain}"
     echo -e "Panel login password has been reset to: ${green} ${config_password} ${plain}"
     echo -e "${green} Please use the new login username and password to access the X-UI panel. Also remember them! ${plain}"
-    confirm_restart
 }
 
 gen_random_string() {
@@ -196,11 +174,8 @@ gen_random_string() {
     echo "$random_string"
 }
 
-reset_webbasepath() {
     echo -e "${yellow}Resetting Web Base Path${plain}"
 
-    read -rp "Are you sure you want to reset the web base path? (y/n): " confirm
-    if [[ $confirm != "y" && $confirm != "Y" ]]; then
         echo -e "${yellow}Operation canceled.${plain}"
         return
     fi
@@ -215,11 +190,8 @@ reset_webbasepath() {
     restart
 }
 
-reset_config() {
-    confirm "Are you sure you want to reset all panel settings, Account data will not be lost, Username and password will not change" "n"
     if [[ $? != 0 ]]; then
         if [[ $# == 0 ]]; then
-            show_menu
         fi
         return 0
     fi
@@ -232,7 +204,6 @@ check_config() {
     local info=$(/usr/local/x-ui/x-ui setting -show true)
     if [[ $? != 0 ]]; then
         LOGE "get current settings error, please check logs"
-        show_menu
         return
     fi
     LOGI "${info}"
@@ -260,11 +231,9 @@ set_port() {
     read -r port
     if [[ -z "${port}" ]]; then
         LOGD "Cancelled"
-        before_show_menu
     else
         /usr/local/x-ui/x-ui setting -port ${port}
         echo -e "The port is set, Please restart the panel now, and use the new port ${green}${port}${plain} to access web panel"
-        confirm_restart
     fi
 }
 
@@ -285,7 +254,6 @@ start() {
     fi
 
     if [[ $# == 0 ]]; then
-        before_show_menu
     fi
 }
 
@@ -306,7 +274,6 @@ stop() {
     fi
 
     if [[ $# == 0 ]]; then
-        before_show_menu
     fi
 }
 
@@ -320,14 +287,12 @@ restart() {
         LOGE "Panel restart failed, Probably because it takes longer than two seconds to start, Please check the log information later"
     fi
     if [[ $# == 0 ]]; then
-        before_show_menu
     fi
 }
 
 status() {
     systemctl status x-ui -l
     if [[ $# == 0 ]]; then
-        before_show_menu
     fi
 }
 
@@ -340,7 +305,6 @@ enable() {
     fi
 
     if [[ $# == 0 ]]; then
-        before_show_menu
     fi
 }
 
@@ -353,7 +317,6 @@ disable() {
     fi
 
     if [[ $# == 0 ]]; then
-        before_show_menu
     fi
 }
 
@@ -361,16 +324,13 @@ show_log() {
     echo -e "${green}\t1.${plain} Debug Log"
     echo -e "${green}\t2.${plain} Clear All logs"
     echo -e "${green}\t0.${plain} Back to Main Menu"
-    read -rp "Choose an option: " choice
 
     case "$choice" in
     0)
-        show_menu
         ;;
     1)
         journalctl -u x-ui -e --no-pager -f -p debug
         if [[ $# == 0 ]]; then
-            before_show_menu
         fi
         ;;
     2)
@@ -417,26 +377,20 @@ show_banlog() {
     fail2ban-client status 3x-ipl || echo -e "${yellow}Unable to get jail status${plain}"
 }
 
-bbr_menu() {
     echo -e "${green}\t1.${plain} Enable BBR"
     echo -e "${green}\t2.${plain} Disable BBR"
     echo -e "${green}\t0.${plain} Back to Main Menu"
-    read -rp "Choose an option: " choice
     case "$choice" in
     0)
-        show_menu
         ;;
     1)
         enable_bbr
-        bbr_menu
         ;;
     2)
         disable_bbr
-        bbr_menu
         ;;
     *)
         echo -e "${red}Invalid option. Please select a valid number.${plain}\n"
-        bbr_menu
         ;;
     esac
 }
@@ -445,7 +399,6 @@ disable_bbr() {
 
     if ! grep -q "net.core.default_qdisc=fq" /etc/sysctl.conf || ! grep -q "net.ipv4.tcp_congestion_control=bbr" /etc/sysctl.conf; then
         echo -e "${yellow}BBR is not currently enabled.${plain}"
-        before_show_menu
     fi
 
     # Replace BBR with CUBIC configurations
@@ -466,7 +419,6 @@ disable_bbr() {
 enable_bbr() {
     if grep -q "net.core.default_qdisc=fq" /etc/sysctl.conf && grep -q "net.ipv4.tcp_congestion_control=bbr" /etc/sysctl.conf; then
         echo -e "${green}BBR is already enabled!${plain}"
-        before_show_menu
     fi
 
     # Check the OS and install necessary packages
@@ -481,7 +433,6 @@ enable_bbr() {
         dnf -y update && dnf -y install ca-certificates
         ;;
     arch | manjaro | parch)
-        pacman -Sy --noconfirm ca-certificates
         ;;
     *)
         echo -e "${red}Unsupported operating system. Please check the script and install the necessary packages manually.${plain}\n"
@@ -509,11 +460,9 @@ update_shell() {
     if [[ $? != 0 ]]; then
         echo ""
         LOGE "Failed to download script, Please check whether the machine can connect Github"
-        before_show_menu
     else
         chmod +x /usr/bin/x-ui
         LOGI "Upgrade script succeeded, Please rerun the script"
-        before_show_menu
     fi
 }
 
@@ -545,7 +494,6 @@ check_uninstall() {
         echo ""
         LOGE "Panel installed, Please do not reinstall"
         if [[ $# == 0 ]]; then
-            before_show_menu
         fi
         return 1
     else
@@ -559,7 +507,6 @@ check_install() {
         echo ""
         LOGE "Please install the panel first"
         if [[ $# == 0 ]]; then
-            before_show_menu
         fi
         return 1
     else
@@ -612,7 +559,6 @@ show_xray_status() {
     fi
 }
 
-firewall_menu() {
     echo -e "${green}\t1.${plain} ${green}Install${plain} Firewall"
     echo -e "${green}\t2.${plain} Port List [numbered]"
     echo -e "${green}\t3.${plain} ${green}Open${plain} Ports"
@@ -621,42 +567,32 @@ firewall_menu() {
     echo -e "${green}\t6.${plain} ${red}Disable${plain} Firewall"
     echo -e "${green}\t7.${plain} Firewall Status"
     echo -e "${green}\t0.${plain} Back to Main Menu"
-    read -rp "Choose an option: " choice
     case "$choice" in
     0)
-        show_menu
         ;;
     1)
         install_firewall
-        firewall_menu
         ;;
     2)
         ufw status numbered
-        firewall_menu
         ;;
     3)
         open_ports
-        firewall_menu
         ;;
     4)
         delete_ports
-        firewall_menu
         ;;
     5)
         ufw enable
-        firewall_menu
         ;;
     6)
         ufw disable
-        firewall_menu
         ;;
     7)
         ufw status verbose
-        firewall_menu
         ;;
     *)
         echo -e "${red}Invalid option. Please select a valid number.${plain}\n"
-        firewall_menu
         ;;
     esac
 }
@@ -689,7 +625,6 @@ install_firewall() {
 
 open_ports() {
     # Prompt the user to enter the ports they want to open
-    read -rp "Enter the ports you want to open (e.g. 80,443,2053 or range 400-500): " ports
 
     # Check if the input is valid
     if ! [[ $ports =~ ^([0-9]+|[0-9]+-[0-9]+)(,([0-9]+|[0-9]+-[0-9]+))*$ ]]; then
@@ -737,11 +672,9 @@ delete_ports() {
     echo "Do you want to delete rules by:"
     echo "1) Rule numbers"
     echo "2) Ports"
-    read -rp "Enter your choice (1 or 2): " choice
 
     if [[ $choice -eq 1 ]]; then
         # Deleting by rule numbers
-        read -rp "Enter the rule numbers you want to delete (1, 2, etc.): " rule_numbers
 
         # Validate the input
         if ! [[ $rule_numbers =~ ^([0-9]+)(,[0-9]+)*$ ]]; then
@@ -760,7 +693,6 @@ delete_ports() {
 
     elif [[ $choice -eq 2 ]]; then
         # Deleting by ports
-        read -rp "Enter the ports you want to delete (e.g. 80,443,2053 or range 400-500): " ports
 
         # Validate the input
         if ! [[ $ports =~ ^([0-9]+|[0-9]+-[0-9]+)(,([0-9]+|[0-9]+-[0-9]+))*$ ]]; then
@@ -808,13 +740,11 @@ update_geo() {
     echo -e "${green}\t2.${plain} chocolate4u (geoip_IR.dat, geosite_IR.dat)"
     echo -e "${green}\t3.${plain} runetfreedom (geoip_RU.dat, geosite_RU.dat)"
     echo -e "${green}\t0.${plain} Back to Main Menu"
-    read -rp "Choose an option: " choice
 
     cd /usr/local/x-ui/bin
 
     case "$choice" in
     0)
-        show_menu
         ;;
     1)
         systemctl stop x-ui
@@ -846,7 +776,6 @@ update_geo() {
         ;;
     esac
 
-    before_show_menu
 }
 
 install_acme() {
@@ -870,7 +799,6 @@ install_acme() {
     return 0
 }
 
-ssl_cert_issue_main() {
     echo -e "${green}\t1.${plain} Get SSL"
     echo -e "${green}\t2.${plain} Revoke"
     echo -e "${green}\t3.${plain} Force Renew"
@@ -878,14 +806,10 @@ ssl_cert_issue_main() {
     echo -e "${green}\t5.${plain} Set Cert paths for the panel"
     echo -e "${green}\t0.${plain} Back to Main Menu"
 
-    read -rp "Choose an option: " choice
     case "$choice" in
     0)
-        show_menu
         ;;
     1)
-        ssl_cert_issue
-        ssl_cert_issue_main
         ;;
     2)
         local domains=$(find /root/cert/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)
@@ -894,7 +818,6 @@ ssl_cert_issue_main() {
         else
             echo "Existing domains:"
             echo "$domains"
-            read -rp "Please enter a domain from the list to revoke the certificate: " domain
             if echo "$domains" | grep -qw "$domain"; then
                 ~/.acme.sh/acme.sh --revoke -d ${domain}
                 LOGI "Certificate revoked for domain: $domain"
@@ -902,7 +825,6 @@ ssl_cert_issue_main() {
                 echo "Invalid domain entered."
             fi
         fi
-        ssl_cert_issue_main
         ;;
     3)
         local domains=$(find /root/cert/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)
@@ -911,7 +833,6 @@ ssl_cert_issue_main() {
         else
             echo "Existing domains:"
             echo "$domains"
-            read -rp "Please enter a domain from the list to renew the SSL certificate: " domain
             if echo "$domains" | grep -qw "$domain"; then
                 ~/.acme.sh/acme.sh --renew -d ${domain} --force
                 LOGI "Certificate forcefully renewed for domain: $domain"
@@ -919,7 +840,6 @@ ssl_cert_issue_main() {
                 echo "Invalid domain entered."
             fi
         fi
-        ssl_cert_issue_main
         ;;
     4)
         local domains=$(find /root/cert/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)
@@ -939,7 +859,6 @@ ssl_cert_issue_main() {
                 fi
             done
         fi
-        ssl_cert_issue_main
         ;;
     5)
         local domains=$(find /root/cert/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)
@@ -948,7 +867,6 @@ ssl_cert_issue_main() {
         else
             echo "Available domains:"
             echo "$domains"
-            read -rp "Please choose a domain to set the panel paths: " domain
 
             if echo "$domains" | grep -qw "$domain"; then
                 local webCertFile="/root/cert/${domain}/fullchain.pem"
@@ -967,17 +885,14 @@ ssl_cert_issue_main() {
                 echo "Invalid domain entered."
             fi
         fi
-        ssl_cert_issue_main
         ;;
 
     *)
         echo -e "${red}Invalid option. Please select a valid number.${plain}\n"
-        ssl_cert_issue_main
         ;;
     esac
 }
 
-ssl_cert_issue() {
     local existing_webBasePath=$(/usr/local/x-ui/x-ui setting -show true | grep -Eo 'webBasePath: .+' | awk '{print $2}')
     local existing_port=$(/usr/local/x-ui/x-ui setting -show true | grep -Eo 'port: .+' | awk '{print $2}')
     # check for acme.sh first
@@ -1002,7 +917,6 @@ ssl_cert_issue() {
         dnf -y update && dnf -y install socat
         ;;
     arch | manjaro | parch)
-        pacman -Sy --noconfirm socat
         ;;
     *)
         echo -e "${red}Unsupported operating system. Please check the script and install the necessary packages manually.${plain}\n"
@@ -1018,7 +932,6 @@ ssl_cert_issue() {
 
     # get the domain here, and we need to verify it
     local domain=""
-    read -rp "Please enter your domain name: " domain
     LOGD "Your domain is: ${domain}, checking it..."
 
     # check if there already exists a certificate
@@ -1043,7 +956,6 @@ ssl_cert_issue() {
 
     # get the port number for the standalone server
     local WebPort=80
-    read -rp "Please choose which port to use (default is 80): " WebPort
     if [[ ${WebPort} -gt 65535 || ${WebPort} -lt 1 ]]; then
         LOGE "Your input ${WebPort} is invalid, will use default port 80."
         WebPort=80
@@ -1065,12 +977,10 @@ ssl_cert_issue() {
 
     LOGI "Default --reloadcmd for ACME is: ${yellow}x-ui restart"
     LOGI "This command will run on every certificate issue and renew."
-    read -rp "Would you like to modify --reloadcmd for ACME? (y/n): " setReloadcmd
     if [[ "$setReloadcmd" == "y" || "$setReloadcmd" == "Y" ]]; then
         echo -e "\n${green}\t1.${plain} Preset: systemctl reload nginx ; x-ui restart"
         echo -e "${green}\t2.${plain} Input your own command"
         echo -e "${green}\t0.${plain} Keep default reloadcmd"
-        read -rp "Choose an option: " choice
         case "$choice" in
         1)
             LOGI "Reloadcmd is: systemctl reload nginx ; x-ui restart"
@@ -1078,7 +988,6 @@ ssl_cert_issue() {
             ;;
         2)  
             LOGD "It's recommended to put x-ui restart at the end, so it won't raise an error if other services fails"
-            read -rp "Please enter your reloadcmd (example: systemctl reload nginx ; x-ui restart): " reloadCmd
             LOGI "Your reloadcmd is: ${reloadCmd}"
             ;;
         *)
@@ -1114,7 +1023,6 @@ ssl_cert_issue() {
     fi
 
     # Prompt user to set panel paths after successful certificate installation
-    read -rp "Would you like to set this certificate for the panel? (y/n): " setPanel
     if [[ "$setPanel" == "y" || "$setPanel" == "Y" ]]; then
         local webCertFile="/root/cert/${domain}/fullchain.pem"
         local webKeyFile="/root/cert/${domain}/privkey.pem"
@@ -1134,7 +1042,6 @@ ssl_cert_issue() {
     fi
 }
 
-ssl_cert_issue_CF() {
     local existing_webBasePath=$(/usr/local/x-ui/x-ui setting -show true | grep -Eo 'webBasePath: .+' | awk '{print $2}')
     local existing_port=$(/usr/local/x-ui/x-ui setting -show true | grep -Eo 'port: .+' | awk '{print $2}')
     LOGI "****** Instructions for Use ******"
@@ -1145,7 +1052,6 @@ ssl_cert_issue_CF() {
     LOGI "4. Once the certificate is issued, you will be prompted to set the certificate for the panel (optional)."
     LOGI "5. The script also supports automatic renewal of the SSL certificate after installation."
 
-    confirm "Do you confirm the information and wish to proceed? [y/n]" "y"
 
     if [ $? -eq 0 ]; then
         # Check for acme.sh first
@@ -1161,18 +1067,15 @@ ssl_cert_issue_CF() {
         CF_Domain=""
 
         LOGD "Please set a domain name:"
-        read -rp "Input your domain here: " CF_Domain
         LOGD "Your domain name is set to: ${CF_Domain}"
 
         # Set up Cloudflare API details
         CF_GlobalKey=""
         CF_AccountEmail=""
         LOGD "Please set the API key:"
-        read -rp "Input your key here: " CF_GlobalKey
         LOGD "Your API key is: ${CF_GlobalKey}"
 
         LOGD "Please set up registered email:"
-        read -rp "Input your email here: " CF_AccountEmail
         LOGD "Your registered email address is: ${CF_AccountEmail}"
 
         # Set the default CA to Let's Encrypt
@@ -1210,12 +1113,10 @@ ssl_cert_issue_CF() {
 
         LOGI "Default --reloadcmd for ACME is: ${yellow}x-ui restart"
         LOGI "This command will run on every certificate issue and renew."
-        read -rp "Would you like to modify --reloadcmd for ACME? (y/n): " setReloadcmd
         if [[ "$setReloadcmd" == "y" || "$setReloadcmd" == "Y" ]]; then
             echo -e "\n${green}\t1.${plain} Preset: systemctl reload nginx ; x-ui restart"
             echo -e "${green}\t2.${plain} Input your own command"
             echo -e "${green}\t0.${plain} Keep default reloadcmd"
-            read -rp "Choose an option: " choice
             case "$choice" in
             1)
                 LOGI "Reloadcmd is: systemctl reload nginx ; x-ui restart"
@@ -1223,7 +1124,6 @@ ssl_cert_issue_CF() {
                 ;;
             2)  
                 LOGD "It's recommended to put x-ui restart at the end, so it won't raise an error if other services fails"
-                read -rp "Please enter your reloadcmd (example: systemctl reload nginx ; x-ui restart): " reloadCmd
                 LOGI "Your reloadcmd is: ${reloadCmd}"
                 ;;
             *)
@@ -1254,7 +1154,6 @@ ssl_cert_issue_CF() {
         fi
 
         # Prompt user to set panel paths after successful certificate installation
-        read -rp "Would you like to set this certificate for the panel? (y/n): " setPanel
         if [[ "$setPanel" == "y" || "$setPanel" == "Y" ]]; then
             local webCertFile="${certPath}/fullchain.pem"
             local webKeyFile="${certPath}/privkey.pem"
@@ -1273,7 +1172,6 @@ ssl_cert_issue_CF() {
             LOGI "Skipping panel path setting."
         fi
     else
-        show_menu
     fi
 }
 
@@ -1411,13 +1309,10 @@ iplimit_main() {
     echo -e "${green}\t9.${plain} Service Restart"
     echo -e "${green}\t10.${plain} Uninstall Fail2ban and IP Limit"
     echo -e "${green}\t0.${plain} Back to Main Menu"
-    read -rp "Choose an option: " choice
     case "$choice" in
     0)
-        show_menu
         ;;
     1)
-        confirm "Proceed with installation of Fail2ban & IP Limit?" "y"
         if [[ $? == 0 ]]; then
             install_iplimit
         else
@@ -1425,7 +1320,6 @@ iplimit_main() {
         fi
         ;;
     2)
-        read -rp "Please enter new Ban Duration in Minutes [default 30]: " NUM
         if [[ $NUM =~ ^[0-9]+$ ]]; then
             create_iplimit_jails ${NUM}
             systemctl restart fail2ban
@@ -1435,7 +1329,6 @@ iplimit_main() {
         iplimit_main
         ;;
     3)
-        confirm "Proceed with Unbanning everyone from IP Limit jail?" "y"
         if [[ $? == 0 ]]; then
             fail2ban-client reload --restart --unban 3x-ipl
             truncate -s 0 "${iplimit_banned_log_path}"
@@ -1451,7 +1344,6 @@ iplimit_main() {
         iplimit_main
         ;;
     5)
-        read -rp "Enter the IP address you want to ban: " ban_ip
         ip_validation
         if [[ $ban_ip =~ $ipv4_regex || $ban_ip =~ $ipv6_regex ]]; then
             fail2ban-client set 3x-ipl banip "$ban_ip"
@@ -1462,7 +1354,6 @@ iplimit_main() {
         iplimit_main
         ;;
     6)
-        read -rp "Enter the IP address you want to unban: " unban_ip
         ip_validation
         if [[ $unban_ip =~ $ipv4_regex || $unban_ip =~ $ipv6_regex ]]; then
             fail2ban-client set 3x-ipl unbanip "$unban_ip"
@@ -1519,7 +1410,6 @@ install_iplimit() {
             dnf -y update && dnf -y install fail2ban
             ;;
         arch | manjaro | parch)
-            pacman -Syu --noconfirm fail2ban
             ;;
         *)
             echo -e "${red}Unsupported operating system. Please check the script and install the necessary packages manually.${plain}\n"
@@ -1565,14 +1455,12 @@ install_iplimit() {
     systemctl enable fail2ban
 
     echo -e "${green}IP Limit installed and configured successfully!${plain}\n"
-    before_show_menu
 }
 
 remove_iplimit() {
     echo -e "${green}\t1.${plain} Only remove IP Limit configurations"
     echo -e "${green}\t2.${plain} Uninstall Fail2ban and IP Limit"
     echo -e "${green}\t0.${plain} Back to Main Menu"
-    read -rp "Choose an option: " num
     case "$num" in
     1)
         rm -f /etc/fail2ban/filter.d/3x-ipl.conf
@@ -1580,7 +1468,6 @@ remove_iplimit() {
         rm -f /etc/fail2ban/jail.d/3x-ipl.conf
         systemctl restart fail2ban
         echo -e "${green}IP Limit removed successfully!${plain}\n"
-        before_show_menu
         ;;
     2)
         rm -rf /etc/fail2ban
@@ -1600,7 +1487,6 @@ remove_iplimit() {
             dnf autoremove -y
             ;;
         arch | manjaro | parch)
-            pacman -Rns --noconfirm fail2ban
             ;;
         *)
             echo -e "${red}Unsupported operating system. Please uninstall Fail2ban manually.${plain}\n"
@@ -1608,10 +1494,8 @@ remove_iplimit() {
             ;;
         esac
         echo -e "${green}Fail2ban and IP Limit removed successfully!${plain}\n"
-        before_show_menu
         ;;
     0)
-        show_menu
         ;;
     *)
         echo -e "${red}Invalid option. Please select a valid number.${plain}\n"
@@ -1633,7 +1517,6 @@ SSH_port_forwarding() {
 
     if [[ -n "$existing_cert" && -n "$existing_key" ]]; then
         echo -e "${green}Panel is secure with SSL.${plain}"
-        before_show_menu
     fi
     if [[ -z "$existing_cert" && -z "$existing_key" && (-z "$existing_listenIP" || "$existing_listenIP" == "0.0.0.0") ]]; then
         echo -e "\n${red}Warning: No Cert and Key found! The panel is not secure.${plain}"
@@ -1654,7 +1537,6 @@ SSH_port_forwarding() {
     echo -e "${green}1.${plain} Set listen IP"
     echo -e "${green}2.${plain} Clear listen IP"
     echo -e "${green}0.${plain} Back to Main Menu"
-    read -rp "Choose an option: " num
 
     case "$num" in
     1)
@@ -1662,10 +1544,8 @@ SSH_port_forwarding() {
             echo -e "\nNo listenIP configured. Choose an option:"
             echo -e "1. Use default IP (127.0.0.1)"
             echo -e "2. Set a custom IP"
-            read -rp "Select an option (1 or 2): " listen_choice
 
             config_listenIP="127.0.0.1"
-            [[ "$listen_choice" == "2" ]] && read -rp "Enter custom IP to listen on: " config_listenIP
 
             /usr/local/x-ui/x-ui setting -listenIP "${config_listenIP}" >/dev/null 2>&1
             echo -e "${green}listen IP has been set to ${config_listenIP}.${plain}"
@@ -1688,7 +1568,6 @@ SSH_port_forwarding() {
         restart
         ;;
     0)
-        show_menu
         ;;
     *)
         echo -e "${red}Invalid option. Please select a valid number.${plain}\n"
@@ -1718,7 +1597,6 @@ show_usage() {
 └───────────────────────────────────────────────────────┘"
 }
 
-show_menu() {
     echo -e "
 ╔────────────────────────────────────────────────╗
 │   ${green}3X-UI Panel Management Script${plain}                │
@@ -1757,7 +1635,6 @@ show_menu() {
 ╚────────────────────────────────────────────────╝
 "
     show_status
-    echo && read -rp "Please enter your selection [0-25]: " num
 
     case "${num}" in
     0)
@@ -1773,19 +1650,15 @@ show_menu() {
         check_install && update_menu
         ;;
     4)
-        check_install && legacy_version
         ;;
     5)
         check_install && uninstall
         ;;
     6)
-        check_install && reset_user
         ;;
     7)
-        check_install && reset_webbasepath
         ;;
     8)
-        check_install && reset_config
         ;;
     9)
         check_install && set_port
@@ -1815,22 +1688,18 @@ show_menu() {
         check_install && disable
         ;;
     18)
-        ssl_cert_issue_main
         ;;
     19)
-        ssl_cert_issue_CF
         ;;
     20)
         iplimit_main
         ;;
     21)
-        firewall_menu
         ;;
     22)
         SSH_port_forwarding
         ;;
     23)
-        bbr_menu
         ;;
     24)
         update_geo
@@ -1846,25 +1715,45 @@ show_menu() {
 
 if [[ $# > 0 ]]; then
     case $1 in
-    "install")
-        bash <(curl -Ls https://raw.githubusercontent.com/634287319/3x-ui/main/install.sh)
-        systemctl start x-ui
-        ;;
     "start")
-        systemctl start x-ui
-        ;;
-    "restart")
-        systemctl restart x-ui
+        check_install 0 && start 0
         ;;
     "stop")
-        systemctl stop x-ui
+        check_install 0 && stop 0
         ;;
-    *)
-        echo "参数无效，仅支持 install/start/restart/stop";
+    "restart")
+        check_install 0 && restart 0
         ;;
+    "status")
+        check_install 0 && status 0
+        ;;
+    "settings")
+        check_install 0 && check_config 0
+        ;;
+    "enable")
+        check_install 0 && enable 0
+        ;;
+    "disable")
+        check_install 0 && disable 0
+        ;;
+    "log")
+        check_install 0 && show_log 0
+        ;;
+    "banlog")
+        check_install 0 && show_banlog 0
+        ;;
+    "update")
+        check_install 0 && update 0
+        ;;
+    "legacy")
+        ;;
+    "install")
+        check_uninstall 0 && install 0
+        ;;
+    "uninstall")
+        check_install 0 && uninstall 0
+        ;;
+    *) show_usage ;;
     esac
 else
-    # 默认自动安装并启动
-    bash <(curl -Ls https://raw.githubusercontent.com/634287319/3x-ui/main/install.sh)
-    systemctl start x-ui
 fi
