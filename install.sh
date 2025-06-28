@@ -24,7 +24,7 @@ systemctl start x-ui
 # 默认账号密码+路径
 username="admin"
 password="admin123"
-port="54321"
+port="12345"
 webBasePath="xui"
 
 # 设置
