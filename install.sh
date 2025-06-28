@@ -25,7 +25,7 @@ systemctl start x-ui
 username="admin"
 password="admin123"
 port="54321"
-webBasePath="panel$(date +%s | tail -c 5)"
+webBasePath="xui"
 
 # 设置
 /usr/local/x-ui/x-ui setting -username $username -password $password -port $port -webBasePath $webBasePath
